@@ -45,7 +45,7 @@ pipeline{
     post {
         always {
 			emailext (
-                to: "",
+                to: "sachinsharma9998@gmail.com",
                 subject: '${DEFAULT_SUBJECT}',
                 body: '${DEFAULT_CONTENT}',
             )
