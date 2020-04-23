@@ -18,12 +18,12 @@ pipeline{
                 withCredentials([usernamePassword(credentialsId: 'docker-creds-pratik', passwordVariable: 'password', usernameVariable: 'username')]){
                     sh '''
                         
-                        docker build -t pratikghose/pet-clinic:${imageVersion} .
+                        docker build -t pratikghose/pet-clinic:1.0.${BUILD_NUMBER} .
                         docker ps -qa --filter name=pet-clinic_container|grep -q . && (docker stop pet-clinic_container && docker rm pet-clinic_container) ||echo pet-clinic_container doesn\\'t exists
-                        docker run --name pet-clinic_container -d -p 8080:8080 pratikghose/pet-clinic:${imageVersion}
+                        docker run --name pet-clinic_container -d -p 8080:8080 pratikghose/pet-clinic:1.0.${BUILD_NUMBER}
                         docker login -u ${username} -p ${password}
                         docker images
-                        docker push pratikghose/pet-clinic:${imageVersion}
+                        docker push pratikghose/pet-clinic:1.0.${BUILD_NUMBER}
                     '''
                 }
             }
