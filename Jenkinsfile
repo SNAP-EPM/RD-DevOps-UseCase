@@ -36,6 +36,7 @@ pipeline{
                   sh 'az aks get-credentials --resource-group Demo-4 --name pet-clinic'
                   sh 'kubectl get nodes'
                   sh "kubectl set image deployment/petclinic-app webapp=petclinicacr17.azurecr.io/pet-clinic:1.0.${BUILD_NUMBER}"
+                  sh "kubectl get services petclinic-app"
                 }
                 sh 'az logout'
                
