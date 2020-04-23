@@ -17,5 +17,5 @@ variable "location" {
   default = "westus"
 }
 variable "agent_count"{
-  default = 1
+  default = 
 }
