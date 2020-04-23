@@ -15,13 +15,13 @@ pipeline{
         
         stage('Containerization:push to acr') {
                 steps {
-                    withCredentials([usernamePassword(credentialsId: 'acr-pratik-id',passwordVariable: 'password', usernameVariable: 'username')]) {
+                    withCredentials([usernamePassword(credentialsId: 'acr_creds',passwordVariable: 'password', usernameVariable: 'username')]) {
                             sh'''
                                 docker build -t pet-clinic:1.0.${BUILD_NUMBER} .
                                 docker ps -qa --filter name=pet-clinic_container|grep -q . && (docker stop pet-clinic_container && docker rm pet-clinic_container) ||echo pet-clinic_container doesn\\'t exists
-                                docker login petclinicacr17.azurecr.io -u ${username} -p ${password}
-                                docker tag pet-clinic:1.0.${BUILD_NUMBER} petclinicacr17.azurecr.io/pet-clinic:1.0.${BUILD_NUMBER}
-                                docker push petclinicacr17.azurecr.io/pet-clinic:1.0.${BUILD_NUMBER}
+                                docker login myfirstprivateregistry.azurecr.io -u ${username} -p ${password}
+                                docker tag pet-clinic:1.0.${BUILD_NUMBER} myfirstprivateregistry.azurecr.io/pet-clinic:1.0.${BUILD_NUMBER}
+                                docker push myfirstprivateregistry.azurecr.io/pet-clinic:1.0.${BUILD_NUMBER}
                             '''
                 }
             }
@@ -35,7 +35,7 @@ pipeline{
                   '''
                   sh 'az aks get-credentials --resource-group Demo-4 --name pet-clinic'
                   sh 'kubectl get nodes'
-                  sh "kubectl set image deployment/petclinic-app webapp=petclinicacr17.azurecr.io/pet-clinic:1.0.${BUILD_NUMBER}"
+                  sh "kubectl set image deployment/petclinic-app webapp=myfirstprivateregistry.azurecr.io/pet-clinic:1.0.${BUILD_NUMBER}"
                   sh "kubectl get services petclinic-app"
                 }
                 sh 'az logout'
