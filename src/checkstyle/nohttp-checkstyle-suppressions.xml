@@ -5,5 +5,5 @@
 <suppressions>
 	<suppress files="[\\/]build.log" checks="NoHttp"/>
 	<suppress files=".+\.(jar|git|ico|p12|gif|jks|jpg|svg)" checks="NoHttp"/>
-    <suppress files="[\\/]Terraform[\\/]" checks="[a-zA-Z0-9]*"/>
+    <suppress files="[\\/]terraform[\\/]" checks="[a-zA-Z0-9]*"/>
 </suppressions>
