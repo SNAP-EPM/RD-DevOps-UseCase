@@ -50,15 +50,17 @@ pipeline{
             }
         }
         stage('verify') {
-            script {
-                def pet_service=sh(returnStdout: true, script: "kubectl get service|grep petclinic-ap").trim()
-                def pub_ip = pet_service.split()[3]
-                def http_status_code = sh(returnStdout: true, script: "curl -I http://${pub_ip}:80|head -n 1|cut -d ' ' -f2").trim()
-                if (http_status_code == "200") {
-                    echo "The application http://${pub_ip}:80 is successfully deployed.\n http status code is ${http_status_code}"
-                }
-                else {
-                    echo "The application http://${pub_ip}:80 status code is ${http_status_code}. Please look into it."
+            steps {
+                script {
+                    def pet_service=sh(returnStdout: true, script: "kubectl get service|grep petclinic-ap").trim()
+                    def pub_ip = pet_service.split()[3]
+                    def http_status_code = sh(returnStdout: true, script: "curl -I http://${pub_ip}:80|head -n 1|cut -d ' ' -f2").trim()
+                    if (http_status_code == "200") {
+                        echo "The application http://${pub_ip}:80 is successfully deployed.\n http status code is ${http_status_code}"
+                    }
+                    else {
+                        echo "The application http://${pub_ip}:80 status code is ${http_status_code}. Please look into it."
+                    }
                 }
             }
         }
