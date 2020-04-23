@@ -14,7 +14,7 @@ variable "tenant_id" {
   
 }
 variable "location" {
-  default = "westus"
+  default = "eastus2"
 }
 variable "agent_count"{
   default = 1
