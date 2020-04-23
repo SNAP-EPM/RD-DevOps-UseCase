@@ -12,29 +12,15 @@ pipeline{
                 sh './mvnw verify sonar:sonar'
             }
         }
-        stage('Containerization') {
-            steps {
-                sh 'ls'
-                withCredentials([usernamePassword(credentialsId: 'docker-creds-pratik', passwordVariable: 'password', usernameVariable: 'username')]){
-                    sh '''
-                        
-                        docker build -t pratikghose/pet-clinic:1.0.${BUILD_NUMBER} .
-                        docker ps -qa --filter name=pet-clinic_container|grep -q . && (docker stop pet-clinic_container && docker rm pet-clinic_container) ||echo pet-clinic_container doesn\\'t exists
-                        docker login -u ${username} -p ${password}
-                        docker images
-                        docker push pratikghose/pet-clinic:1.0.${BUILD_NUMBER}
-                    '''
-                }
-            }
-        }
         
-        
-        stage('push to acr') {
+        stage('Containerization:push to acr') {
                 steps {
                     withCredentials([usernamePassword(credentialsId: 'acr-pratik-id',passwordVariable: 'password', usernameVariable: 'username')]) {
                             sh'''
+                                docker build -t pet-clinic:1.0.${BUILD_NUMBER} .
+                                docker ps -qa --filter name=pet-clinic_container|grep -q . && (docker stop pet-clinic_container && docker rm pet-clinic_container) ||echo pet-clinic_container doesn\\'t exists
                                 docker login petclinicacr17.azurecr.io -u ${username} -p ${password}
-                                docker tag pratikghose/pet-clinic:1.0.${BUILD_NUMBER} petclinicacr17.azurecr.io/pet-clinic:1.0.${BUILD_NUMBER}
+                                docker tag pet-clinic:1.0.${BUILD_NUMBER} petclinicacr17.azurecr.io/pet-clinic:1.0.${BUILD_NUMBER}
                                 docker push petclinicacr17.azurecr.io/pet-clinic:1.0.${BUILD_NUMBER}
                             '''
                 }
