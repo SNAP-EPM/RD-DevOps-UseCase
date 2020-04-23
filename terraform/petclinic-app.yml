@@ -15,8 +15,8 @@ spec:
         app: petclinic-app
     spec:
       containers:
-      - image: sachinshrma/petclinic
-        imagePullPolicy: IfNotPresent
+      - image: sachinshrma/petclinic:latest
+        imagePullPolicy: Always
         name: webapp
         env:
         - name: SPRING_PROFILES_ACTIVE
