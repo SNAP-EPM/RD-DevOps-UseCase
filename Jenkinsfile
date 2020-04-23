@@ -12,24 +12,31 @@ pipeline{
                 sh './mvnw verify sonar:sonar'
             }
         }
-        stage('Containerization'){
-            steps{
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', passwordVariable: 'password', usernameVariable: 'username')]) {
-                sh "docker login -u ${username} -p ${password}"
-                sh "docker build -t sachinshrma/petclinic:${imageVersion} ."
-                sh 'docker build -t sachinshrma/petclinic:latest .'
-                sh "docker push sachinshrma/petclinic:${imageVersion}"
-                sh 'docker push sachinshrma/petclinic:latest'
+        stage('Containerization') {
+            steps {
+                sh 'ls'
+                withCredentials([usernamePassword(credentialsId: 'docker-creds-pratik', passwordVariable: 'password', usernameVariable: 'username')]){
+                    sh '''
+                        
+                        docker build -t pratikghose/pet-clinic:${imageVersion} .
+                        docker ps -qa --filter name=pet-clinic_container|grep -q . && (docker stop pet-clinic_container && docker rm pet-clinic_container) ||echo pet-clinic_container doesn\\'t exists
+                        docker run --name pet-clinic_container -d -p 8080:8080 pratikghose/pet-clinic:${imageVersion}
+                        docker login -u ${username} -p ${password}
+                        docker images
+                        docker push pratikghose/pet-clinic:${imageVersion}
+                    '''
                 }
             }
         }
+        
+        
         stage('push to acr') {
             steps {
                 dir('Azure Container Registry Upload'){
                     withCredentials([usernamePassword(credentialsId: 'acr-pratik-id',passwordVariable: 'password', usernameVariable: 'username')]) {
                             sh'''
                                 docker login petclinicacr17.azurecr.io -u ${username} -p ${password}
-                                docker tag achinshrma/petclinic:${imageVersion} petclinicacr17.azurecr.io/pet-clinic:${imageVersion}
+                                docker tag pratikghose/pet-clinic:${BUILD_NUMBER} petclinicacr17.azurecr.io/pet-clinic:${imageVersion}
                                 docker push petclinicacr17.azurecr.io/pet-clinic:${imageVersion}
                             '''
                     }
@@ -55,7 +62,7 @@ pipeline{
     post {
         always {
 			emailext (
-                to: "sachinsharma9998@gmail.com",
+                to: "",
                 subject: '${DEFAULT_SUBJECT}',
                 body: '${DEFAULT_CONTENT}',
             )
