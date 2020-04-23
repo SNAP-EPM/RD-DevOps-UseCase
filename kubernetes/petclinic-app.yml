@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: petclinic-app
+  labels:
+    app: petclinic-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: petclinic-app
+  template:
+    metadata:
+      labels:
+        app: petclinic-app
+    spec:
+      containers:
+      - image: sachinshrma/petclinic
+        imagePullPolicy: IfNotPresent
+        name: webapp
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "mysql"
+        ports:
+        - containerPort: 8080
+          name: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: petclinic-app
+  labels:
+    app: petclinic-app
+spec:
+  type: LoadBalancer
+  selector:
+    app: petclinic-app
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080

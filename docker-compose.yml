@@ -1,0 +1,24 @@
+version: '3.3'
+services:
+  mysqldb:
+    image: mysql:5.7
+    environment:
+      - MYSQL_ROOT_PASSWORD=
+      - MYSQL_ALLOW_EMPTY_PASSWORD=true
+      - MYSQL_USER=petclinic
+      - MYSQL_PASSWORD=petclinic
+      - MYSQL_DATABASE=petclinic
+    volumes:
+       - db_data:/var/lib/mysql
+    restart: always
+  webapp:
+    depends_on:
+      - mysqldb
+    image: sachinshrma/petclinic
+    ports:
+      - "80:8080"
+    restart: always
+    environment:
+      - SPRING_PROFILES_ACTIVE=mysql
+volumes:
+    db_data:
