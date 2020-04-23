@@ -31,15 +31,13 @@ pipeline{
         
         
         stage('push to acr') {
-            steps {
-                dir('Azure Container Registry Upload'){
+                steps {
                     withCredentials([usernamePassword(credentialsId: 'acr-pratik-id',passwordVariable: 'password', usernameVariable: 'username')]) {
                             sh'''
                                 docker login petclinicacr17.azurecr.io -u ${username} -p ${password}
-                                docker tag pratikghose/pet-clinic:${BUILD_NUMBER} petclinicacr17.azurecr.io/pet-clinic:${imageVersion}
-                                docker push petclinicacr17.azurecr.io/pet-clinic:${imageVersion}
+                                docker tag pratikghose/pet-clinic:1.0.${BUILD_NUMBER} petclinicacr17.azurecr.io/pet-clinic:1.0.${BUILD_NUMBER}
+                                docker push petclinicacr17.azurecr.io/pet-clinic:1.0.${BUILD_NUMBER}
                             '''
-                    }
                 }
             }
         }
@@ -52,7 +50,7 @@ pipeline{
                   '''
                   sh 'az aks get-credentials --resource-group Demo-4 --name pet-clinic'
                   sh 'kubectl get nodes'
-                  sh "kubectl set image deployment/petclinic-app webapp=petclinicacr17.azurecr.io/pet-clinic:${imageVersion}"
+                  sh "kubectl set image deployment/petclinic-app webapp=petclinicacr17.azurecr.io/pet-clinic:1.0.${BUILD_NUMBER}"
                 }
                 sh 'az logout'
                
