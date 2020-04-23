@@ -36,7 +36,7 @@ pipeline{
                     kubectl apply -f petclinic-mysql.yml
                     kubectl apply -f petclinic-app.yml
                     kubectl describe services petclinic-app
-                    kubectl get pods --selector=app=petclinic-app
+                    kubectl describe pods --selector=app=petclinic-app
                   '''
                 }
               }
