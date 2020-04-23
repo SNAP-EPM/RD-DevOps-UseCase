@@ -25,24 +25,27 @@ pipeline{
         }
         stage('Deploy'){
             steps{
+                dir("terraform"){
                 withCredentials([azureServicePrincipal('sp_for_FreeTrial-Nagaraju_sub')]) {
                   sh '''
-                    az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID
-                    az account set -s $AZURE_SUBSCRIPTION_ID
+                    terraform init -input=false
+                    terraform apply -var="prefix=prod" -var="subscription_id=${AZURE_SUBSCRIPTION_ID}" -var="client_id=${AZURE_CLIENT_ID}" -var="client_secret=${AZURE_CLIENT_SECRET}" -var="tenant_id=${AZURE_TENANT_ID}" -input=false -auto-approve
+                    echo "$(terraform output kube_config)" > ./azurek8s
+                    export KUBECONFIG=./azurek8s
+                    kubectl get nodes
+                    kubectl apply -f petclinic-mysql.yml
+                    kubectl apply -f petclinic-app.yml
+                    kubectl describe services petclinic-app
                   '''
-                  sh 'az aks get-credentials --resource-group Demo-4 --name pet-clinic'
-                  sh 'kubectl get nodes'
-                  sh "kubectl set image deployment/petclinic-app webapp=sachinshrma/petclinic:${imageVersion}"
                 }
-                sh 'az logout'
-               
+              }
             }
         }
     }
     post {
         always {
 			emailext (
-                to: "sachinsharma9998@gmail.com",
+                to: "",
                 subject: '${DEFAULT_SUBJECT}',
                 body: '${DEFAULT_CONTENT}',
             )
