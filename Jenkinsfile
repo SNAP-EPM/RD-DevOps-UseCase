@@ -23,6 +23,19 @@ pipeline{
                 }
             }
         }
+        stage('push to acr') {
+            steps {
+                dir('Azure Container Registry Upload'){
+                    withCredentials([usernamePassword(credentialsId: 'acr-pratik-id',passwordVariable: 'password', usernameVariable: 'username')]) {
+                            sh'''
+                                docker login petclinicacr17.azurecr.io -u ${username} -p ${password}
+                                docker tag achinshrma/petclinic:${imageVersion} petclinicacr17.azurecr.io/pet-clinic:${imageVersion}
+                                docker push petclinicacr17.azurecr.io/pet-clinic:${imageVersion}
+                            '''
+                    }
+                }
+            }
+        }
         stage('Deploy'){
             steps{
                 withCredentials([azureServicePrincipal('sp_for_FreeTrial-Nagaraju_sub')]) {
@@ -32,7 +45,7 @@ pipeline{
                   '''
                   sh 'az aks get-credentials --resource-group Demo-4 --name pet-clinic'
                   sh 'kubectl get nodes'
-                  sh "kubectl set image deployment/petclinic-app webapp=sachinshrma/petclinic:${imageVersion}"
+                  sh "kubectl set image deployment/petclinic-app webapp=petclinicacr17.azurecr.io/pet-clinic:${imageVersion}"
                 }
                 sh 'az logout'
                
