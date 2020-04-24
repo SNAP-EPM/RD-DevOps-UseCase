@@ -14,25 +14,27 @@ pipeline{
         }
         stage('Containerization'){
             steps{
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', passwordVariable: 'password', usernameVariable: 'username')]) {
-                sh "docker login -u ${username} -p ${password}"
-                sh "docker build -t sachinshrma/petclinic:${imageVersion} ."
-                sh 'docker build -t sachinshrma/petclinic:latest .'
-                sh "docker push sachinshrma/petclinic:${imageVersion}"
-                sh 'docker push sachinshrma/petclinic:latest'
+                withCredentials([usernamePassword(credentialsId: 'acr_creds', passwordVariable: 'password', usernameVariable: 'username')]) {
+                sh "docker login myfirstprivateregistry.azurecr.io -u ${username} -p ${password}"
+                sh "docker build -t myfirstprivateregistry.azurecr.io/petclinic:${imageVersion} ."
+                sh 'docker build -t myfirstprivateregistry.azurecr.io/petclinic:latest .'
+                sh "docker push myfirstprivateregistry.azurecr.io/petclinic:${imageVersion}"
+                sh 'docker push myfirstprivateregistry.azurecr.io/petclinic:latest'
                 }
             }
         }
         stage('Deploy'){
             steps{
                 dir("terraform"){
-                withCredentials([azureServicePrincipal('sp_for_FreeTrial-Nagaraju_sub')]) {
+                withCredentials([azureServicePrincipal('sp_for_FreeTrial-Nagaraju_sub'),
+                                usernamePassword(credentialsId: 'acr_creds', passwordVariable: 'password', usernameVariable: 'username')]) {
                   sh '''
                     terraform init -input=false
                     terraform apply -var="prefix=prod" -var="subscription_id=${AZURE_SUBSCRIPTION_ID}" -var="client_id=${AZURE_CLIENT_ID}" -var="client_secret=${AZURE_CLIENT_SECRET}" -var="tenant_id=${AZURE_TENANT_ID}" -input=false -auto-approve
                     echo "$(terraform output kube_config)" > ./azurek8s
                     export KUBECONFIG=./azurek8s
                     kubectl get nodes
+                    kubectl create secret docker-registry acr-creds-secret --docker-server myfirstprivateregistry.azurecr.io --docker-email sachinsharma9998@gmail.com --docker-username=${username} --docker-password ${password}
                     kubectl apply -f petclinic-mysql.yml
                     export PETCLINIC_IMAGE="sachinshrma/petclinic:1.0.${BUILD_NUMBER}"
                     envsubst < petclinic-app.yml | kubectl apply -f -
