@@ -31,9 +31,10 @@ pipeline{
                     terraform init -input=false
                     terraform apply -var="prefix=prod" -var="subscription_id=${AZURE_SUBSCRIPTION_ID}" -var="client_id=${AZURE_CLIENT_ID}" -var="client_secret=${AZURE_CLIENT_SECRET}" -var="tenant_id=${AZURE_TENANT_ID}" -input=false -auto-approve
                     echo "$(terraform output kube_config)" > ./azurek8s
-                    export KUBECONFIG=./azurek8s PETCLINIC_IMAGE=sachinshrma/petclinic:${imageVersion}
+                    export KUBECONFIG=./azurek8s
                     kubectl get nodes
                     kubectl apply -f petclinic-mysql.yml
+                    export PETCLINIC_IMAGE="sachinshrma/petclinic:${imageVersion}"
                     envsubst < petclinic-app.yml | kubectl apply -f -
                     kubectl describe services petclinic-app
                     kubectl describe pods --selector=app=petclinic-app
