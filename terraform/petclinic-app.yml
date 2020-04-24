@@ -15,7 +15,7 @@ spec:
         app: petclinic-app
     spec:
       containers:
-      - image: sachinshrma/petclinic:latest
+      - image: $PETCLINIC_IMAGE
         imagePullPolicy: Always
         name: webapp
         env:
