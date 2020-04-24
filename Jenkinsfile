@@ -36,7 +36,7 @@ pipeline{
                     kubectl get nodes
        
                     kubectl apply -f petclinic-mysql.yml
-                    export PETCLINIC_IMAGE="sachinshrma/petclinic:1.0.${BUILD_NUMBER}"
+                    export PETCLINIC_IMAGE="myfirstprivateregistry.azurecr.io/petclinic:1.0.${BUILD_NUMBER}"
                     envsubst < petclinic-app.yml | kubectl apply -f -
                     kubectl describe services petclinic-app
                     kubectl describe pods --selector=app=petclinic-app
