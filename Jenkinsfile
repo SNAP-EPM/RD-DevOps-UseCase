@@ -27,7 +27,7 @@ pipeline{
         }
         stage('Deploy'){
             steps{
-                dir(""){
+                dir("TFAKS"){
                 withCredentials([azureServicePrincipal('sp_for_FreeTrial-Nagaraju_sub'),usernamePassword(credentialsId: 'acr_creds', passwordVariable: 'password', usernameVariable: 'username')]) {
                   sh'''
                     az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID
