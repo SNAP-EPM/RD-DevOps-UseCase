@@ -1,4 +1,3 @@
-def imageVersion="1.0.${BUILD_NUMBER}"
 pipeline{
     agent {label 'slave_agent'}
     stages{    
@@ -28,25 +27,40 @@ pipeline{
         }
         stage('Deploy'){
             steps{
-                withCredentials([azureServicePrincipal('sp_for_FreeTrial-Nagaraju_sub')]) {
-                  sh '''
+                dir(""){
+                withCredentials([azureServicePrincipal('sp_for_FreeTrial-Nagaraju_sub'),usernamePassword(credentialsId: 'acr_creds', passwordVariable: 'password', usernameVariable: 'username')]) {
+                  sh'''
                     az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID
-                    az account set -s $AZURE_SUBSCRIPTION_ID
+                    CHECK=az group exists -n tstate
+                    if(!CHECK){
+                        az account set -s $AZURE_SUBSCRIPTION_ID
+                        az group create --name "tstate" --location eastus
+                        az storage account create --resource-group "tstate" --name "tstateaksdemo" --sku Standard_LRS --encryption-services blob
+                        ACCOUNT_KEY=$(az storage account keys list --resource-group tstate --account-name tstateaksdemo --query [0].value -o tsv)
+                        az storage container create --name tstate --account-name tstateaksdemo --account-key $ACCOUNT_KEY
+                    }
+                    terraform init -input=false
+                    terraform apply -var="prefix=prod" -var="subscription_id=${AZURE_SUBSCRIPTION_ID}" -var="client_id=${AZURE_CLIENT_ID}" -var="client_secret=${AZURE_CLIENT_SECRET}" -var="tenant_id=${AZURE_TENANT_ID}" -input=false -auto-approve
+                    echo "$(terraform output kube_config)" > ./azurek8s
+                    export KUBECONFIG=./azurek8s
+                    kubectl get nodes
+                    kubectl apply -f petclinic-mysql.yml
+                    export PETCLINIC_IMAGE="myfirstprivateregistry.azurecr.io/petclinic:1.0.${BUILD_NUMBER}"
+                    envsubst < petclinic-app.yml | kubectl apply -f -
+                    kubectl describe services petclinic-app
+                    kubectl describe pods --selector=app=petclinic-app
                   '''
-                  sh 'az aks get-credentials --resource-group Demo-4 --name pet-clinic'
-                  sh 'kubectl get nodes'
-                  sh "kubectl set image deployment/petclinic-app webapp=myfirstprivateregistry.azurecr.io/pet-clinic:1.0.${BUILD_NUMBER}"
-                  sh "kubectl get services petclinic-app"
                 }
-                sh 'az logout'
                
+            }
+
             }
         }
     }
     post {
         always {
 			emailext (
-                to: "sachinsharma9998@gmail.com",
+                to: "prateekghose765@gmail.com",
                 subject: '${DEFAULT_SUBJECT}',
                 body: '${DEFAULT_CONTENT}',
             )
