@@ -15,11 +15,9 @@ pipeline{
         stage('Containerization'){
             steps{
                 withCredentials([usernamePassword(credentialsId: 'acr_creds', passwordVariable: 'password', usernameVariable: 'username')]) {
-                sh "docker login myfirstprivateregistry.azurecr.io -u ${username} -p ${password}"
-                sh "docker build -t myfirstprivateregistry.azurecr.io/petclinic:${imageVersion} ."
-                sh 'docker build -t myfirstprivateregistry.azurecr.io/petclinic:latest .'
-                sh "docker push myfirstprivateregistry.azurecr.io/petclinic:${imageVersion}"
-                sh 'docker push myfirstprivateregistry.azurecr.io/petclinic:latest'
+                sh "docker login ${username}.azurecr.io -u ${username} -p ${password}"
+                sh "docker build -t ${username}.azurecr.io/petclinic:${imageVersion} ."
+                sh "docker push ${username}.azurecr.io/petclinic:${imageVersion}"
                 }
             }
         }
@@ -34,14 +32,14 @@ pipeline{
                     echo "$(terraform output kube_config)" > ./azurek8s
                     export KUBECONFIG=./azurek8s
                     kubectl get nodes
-       
+                    kubectl create secret docker-registry acr-creds-secret --docker-server ${username}.azurecr.io --docker-email anyvalidmail@gmail.com --docker-username=${username} --docker-password ${password}
                     kubectl apply -f petclinic-mysql.yml
-                    export PETCLINIC_IMAGE="myfirstprivateregistry.azurecr.io/petclinic:1.0.${BUILD_NUMBER}"
+                    export PETCLINIC_IMAGE="${username}.azurecr.io/petclinic:1.0.${BUILD_NUMBER}"
                     envsubst < petclinic-app.yml | kubectl apply -f -
                     kubectl describe services petclinic-app
                     kubectl describe pods --selector=app=petclinic-app
                   '''
-                    //kubectl create secret docker-registry acr-creds-secret --docker-server myfirstprivateregistry.azurecr.io --docker-email sachinsharma9998@gmail.com --docker-username=${username} --docker-password ${password}
+                    
                 }
               }
             }
