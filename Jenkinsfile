@@ -28,7 +28,8 @@ pipeline{
         stage('Deploy'){
             steps{
                 dir("TFAKS"){
-                withCredentials([azureServicePrincipal('sp_for_FreeTrial-Nagaraju_sub'),usernamePassword(credentialsId: 'acr_creds', passwordVariable: 'password', usernameVariable: 'username')]) {
+                withCredentials([azureServicePrincipal('sp_for_FreeTrial-Nagaraju_sub'),
+                                 usernamePassword(credentialsId: 'acr_creds', passwordVariable: 'password', usernameVariable: 'username')]) {
                   sh'''
                         #az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID
                         #az group create --name "tstate" --location eastus
@@ -38,7 +39,6 @@ pipeline{
                  
                     terraform init -input=false
                     terraform apply -var="prefix=prod" -var="subscription_id=${AZURE_SUBSCRIPTION_ID}" -var="client_id=${AZURE_CLIENT_ID}" -var="client_secret=${AZURE_CLIENT_SECRET}" -var="tenant_id=${AZURE_TENANT_ID}" -input=false -auto-approve
-                    echo "$(terraform output kube_config)" > ./azurek8s
                     export KUBECONFIG=./azurek8s
                     kubectl get nodes
                     kubectl apply -f petclinic-mysql.yml
