@@ -18,9 +18,9 @@ pipeline{
                             sh'''
                                 docker build -t pet-clinic:1.0.${BUILD_NUMBER} .
                                 docker ps -qa --filter name=pet-clinic_container|grep -q . && (docker stop pet-clinic_container && docker rm pet-clinic_container) ||echo pet-clinic_container doesn\\'t exists
-                                docker login myfirstprivateregistry.azurecr.io -u ${username} -p ${password}
-                                docker tag pet-clinic:1.0.${BUILD_NUMBER} myfirstprivateregistry.azurecr.io/pet-clinic:1.0.${BUILD_NUMBER}
-                                docker push myfirstprivateregistry.azurecr.io/pet-clinic:1.0.${BUILD_NUMBER}
+                                docker login rddevops.azurecr.io -u ${username} -p ${password}
+                                docker tag pet-clinic:1.0.${BUILD_NUMBER} rddevops.azurecr.io/pet-clinic:1.0.${BUILD_NUMBER}
+                                docker push rddevops.azurecr.io/pet-clinic:1.0.${BUILD_NUMBER}
                             '''
                 }
             }
@@ -44,7 +44,7 @@ pipeline{
                     export KUBECONFIG=./azurek8s
                     kubectl get nodes
                     kubectl apply -f petclinic-mysql.yml
-                    export PETCLINIC_IMAGE="myfirstprivateregistry.azurecr.io/petclinic:1.0.${BUILD_NUMBER}"
+                    export PETCLINIC_IMAGE="rddevops.azurecr.io/petclinic:1.0.${BUILD_NUMBER}"
                     envsubst < petclinic-app.yml | kubectl apply -f -
                     kubectl describe services petclinic-app
                     kubectl describe pods --selector=app=petclinic-app
