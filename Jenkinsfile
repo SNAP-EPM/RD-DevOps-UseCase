@@ -32,7 +32,7 @@ pipeline{
                     echo "$(terraform output kube_config)" > ./azurek8s
                     export KUBECONFIG=./azurek8s
                     kubectl get nodes
-                    kubectl create secret docker-registry acr-creds-secret --docker-server ${username}.azurecr.io --docker-email anyvalidmail@gmail.com --docker-username=${username} --docker-password ${password} --dry-run -o yml |kubectl apply -f -
+                    kubectl create secret docker-registry acr-creds-secret --docker-server ${username}.azurecr.io --docker-email anyvalidmail@gmail.com --docker-username=${username} --docker-password ${password} --dry-run -o yaml |kubectl apply -f -
                     kubectl apply -f petclinic-mysql.yml
                     export PETCLINIC_IMAGE="${username}.azurecr.io/petclinic:1.0.${BUILD_NUMBER}"
                     envsubst < petclinic-app.yml | kubectl apply -f -
