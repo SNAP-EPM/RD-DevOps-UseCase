@@ -30,8 +30,7 @@ pipeline{
                 dir("TFAKS"){
                 withCredentials([azureServicePrincipal('sp_for_FreeTrial-Nagaraju_sub'),usernamePassword(credentialsId: 'acr_creds', passwordVariable: 'password', usernameVariable: 'username')]) {
                   sh'''
-                    az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID
-                        
+                        #az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID
                         #az group create --name "tstate" --location eastus
                         #az storage account create --resource-group "tstate" --name "tstateaksdemo" --sku Standard_LRS --encryption-services blob
                         #ACCOUNT_KEY=$(az storage account keys list --resource-group tstate --account-name tstateaksdemo --query [0].value -o tsv)
