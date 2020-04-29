@@ -22,9 +22,9 @@ resource "azurerm_kubernetes_cluster" "aksk8" {
 }
 terraform {
   backend "azurerm" {
-    resource_group_name   = "tstate"
-    storage_account_name  = "tstateaksdemo"
-    container_name        = "tstate"
+    resource_group_name   = "Rd-devops"
+    storage_account_name  = "rddevopsdiag111"
+    container_name        = "terraform"
     key                   = "terraform.tfstate"
   }
 }
