@@ -20,11 +20,4 @@ resource "azurerm_kubernetes_cluster" "aksk8" {
     client_secret = var.client_secret
   }
 }
-terraform {
-  backend "azurerm" {
-    resource_group_name   = "Rd-devops"
-    storage_account_name  = "rddevopsdiag111"
-    container_name        = "terraform"
-    key                   = "terraform.tfstate"
-  }
-}
+
