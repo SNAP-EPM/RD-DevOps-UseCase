@@ -1,12 +1,5 @@
-def imageVersion="1.0.${BUILD_NUMBER}"
-def targetMail = "jenkinsautomationuser@gmail.com"
-
-def emailBuildStatus(targetMail) {
-    emailext body: "please look into the build: ${BUILD_URL}", subject: "${currentBuild.result}: ${BUILD_TAG}", to: "${targetMail}"
-}
-
 pipeline{
-    agent {label 'slave'}
+    agent any
     stages{    
         stage('Build'){
             steps{
@@ -18,56 +11,56 @@ pipeline{
                 sh './mvnw verify sonar:sonar'
             }
         }
-        stage('Containerization:push to acr'){
-            steps{
-                withCredentials([usernamePassword(credentialsId: 'acr_creds',passwordVariable: 'password', usernameVariable: 'username')]) {
+        
+        stage('Containerization:push to acr') {
+                steps {
+                    withCredentials([usernamePassword(credentialsId: 'acr_creds',passwordVariable: 'password', usernameVariable: 'username')]) {
                             sh'''
                                 docker build -t pet-clinic:1.0.${BUILD_NUMBER} .
                                 docker ps -qa --filter name=pet-clinic_container|grep -q . && (docker stop pet-clinic_container && docker rm pet-clinic_container) ||echo pet-clinic_container doesn\\'t exists
-                                docker login myfirstprivateregistry.azurecr.io -u ${username} -p ${password}
-                                docker tag pet-clinic:1.0.${BUILD_NUMBER} myfirstprivateregistry.azurecr.io/pet-clinic:1.0.${BUILD_NUMBER}
-                                docker push myfirstprivateregistry.azurecr.io/pet-clinic:1.0.${BUILD_NUMBER}
+                                docker login rddevops.azurecr.io -u ${username} -p ${password}
+                                docker tag pet-clinic:1.0.${BUILD_NUMBER} rddevops.azurecr.io/pet-clinic:1.0.${BUILD_NUMBER}
+                                docker push rddevops.azurecr.io/pet-clinic:1.0.${BUILD_NUMBER}
                             '''
                 }
             }
         }
-        stage('Deploy using aks'){
-            when {
-                branch 'master'
-            }
+        stage('Deploy'){
             steps{
-                withCredentials([azureServicePrincipal('sp_for_FreeTrial-Nagaraju_sub')]) {
-                  sh '''
-                    az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID
-                    az account set -s $AZURE_SUBSCRIPTION_ID
+                dir("TFAKS"){
+                withCredentials([azureServicePrincipal('sp_for_FreeTrial-Nagaraju_sub'),
+                                 usernamePassword(credentialsId: 'acr_creds', passwordVariable: 'password', usernameVariable: 'username')]) {
+                  sh'''
+                        #az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID
+                        #az group create --name "tstate" --location eastus
+                        #az storage account create --resource-group "tstate" --name "tstateaksdemo" --sku Standard_LRS --encryption-services blob
+                        #ACCOUNT_KEY=$(az storage account keys list --resource-group tstate --account-name tstateaksdemo --query [0].value -o tsv)
+                        #az storage container create --name tstate --account-name tstateaksdemo --account-key $ACCOUNT_KEY
+                 
+                    terraform init -input=false
+                    terraform apply -var="prefix=prod" -var="subscription_id=${AZURE_SUBSCRIPTION_ID}" -var="client_id=${AZURE_CLIENT_ID}" -var="client_secret=${AZURE_CLIENT_SECRET}" -var="tenant_id=${AZURE_TENANT_ID}" -input=false -auto-approve
+                    export KUBECONFIG=./azurek8s
+                    kubectl get nodes
+                    kubectl apply -f petclinic-mysql.yml
+                    export PETCLINIC_IMAGE="rddevops.azurecr.io/petclinic:1.0.${BUILD_NUMBER}"
+                    envsubst < petclinic-app.yml | kubectl apply -f -
+                    kubectl describe services petclinic-app
+                    kubectl describe pods --selector=app=petclinic-app
                   '''
-                  sh 'az aks get-credentials --resource-group Demo-4 --name pet-clinic'
-                  sh 'kubectl get nodes'
-                  sh "kubectl set image deployment/petclinic-app webapp=myfirstprivateregistry.azurecr.io/pet-clinic:1.0.${BUILD_NUMBER}"
-                  sh "kubectl get services petclinic-app"
                 }
-                sh 'az logout'
+               
             }
-        }
-        stage('verify') {
-            steps {
-                script {
-                    def pet_service=sh(returnStdout: true, script: "kubectl get service|grep petclinic-ap").trim()
-                    def pub_ip = pet_service.split()[3]
-                    def http_status_code = sh(returnStdout: true, script: "curl -I http://${pub_ip}:80|head -n 1|cut -d ' ' -f2").trim()
-                    if (http_status_code == "200") {
-                        echo "The application http://${pub_ip}:80 is successfully deployed.\n http status code is ${http_status_code}"
-                    }
-                    else {
-                        echo "The application http://${pub_ip}:80 status code is ${http_status_code}. Please look into it."
-                    }
-                }
+
             }
         }
     }
     post {
         always {
-			emailBuildStatus(targetMail)
+			emailext (
+                to: "prateekghose765@gmail.com",
+                subject: '${DEFAULT_SUBJECT}',
+                body: '${DEFAULT_CONTENT}',
+            )
         }
     }
 }
