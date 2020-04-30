@@ -26,5 +26,6 @@ terraform {
     storage_account_name  = "rddevopsdiag111"
     container_name        = "terraform"
     key                   = "terraform.tfstate"
+    use_msi               = true
   }
 }
